@@ -1,6 +1,28 @@
 [
 {
     "adult": false,
+    "backdrop_path": "/zTnAnYIn0Iv3cn0ZHlzLhou3ybm.jpg",
+    "id": 1368166,
+    "title": "家弑服务",
+    "original_title": "The Housemaid",
+    "overview": "　　生活困顿的米莉，得到了一份在富豪夫妇妮娜和安德鲁家中做家政的工作。但这份看似理想的工作，很快便变得危机四伏。米莉发现，这个富足家庭光鲜亮丽的外表之下，隐藏着远比她想象中更为危险的秘密。她置身于一个充满阴谋与恐惧的环境中，而这个家庭的悲剧命运也随着交织着秘密、丑闻与权力游戏的风暴在逐渐展开。",
+    "poster_path": "/sm5WjHemivXAIphAAEzZ5yCBdNt.jpg",
+    "media_type": "movie",
+    "original_language": "en",
+    "genre_ids": [
+      9648,
+      53
+    ],
+    "popularity": 70.1469,
+    "release_date": "2025-12-18",
+    "softcore": false,
+    "video": false,
+    "vote_average": 7.263,
+    "vote_count": 2227,
+    "genres": "悬疑,惊悚"
+  },
+{
+    "adult": false,
     "backdrop_path": "/mkwVoyP9bFSmfVqU8FJyem52hVR.jpg",
     "id": 220102,
     "name": "暗影蜘蛛侠",
