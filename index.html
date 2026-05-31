@@ -404,9 +404,9 @@
         const title = item.title || item.name || "无标题";
         const date = (item.release_date || item.first_air_date || "").substring(0, 4); 
         const lang = item.original_language || "";
-        const poster = item.poster_path
-          ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-          : "https://via.placeholder.com/400x600/2b2f3a/94a3b8?text=暂无海报";
+        const poster = item.poster_path 
+  ? `https://images.weserv.nl/?url=https://image.tmdb.org/t/p/w500${item.poster_path}` 
+  : "https://via.placeholder.com/400x600/2b2f3a/94a3b8?text=暂无海报";
 
         card.innerHTML = `
           <img src="${poster}" alt="${title}" loading="lazy" />
