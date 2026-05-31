@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>片单</title>
+  <title>⭐</title>
   <style>
     :root {
       --bg-color: #1a1b21; 
@@ -38,7 +38,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       padding-bottom: 20px;
       border-bottom: 1px solid var(--border-color);
     }
@@ -63,6 +63,36 @@
       background: var(--accent);
       color: var(--bg-color);
       border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* 新增：电影/剧集 媒体类型筛选按钮 */
+    .media-type-filter {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .type-btn {
+      background: #2b2f3a;
+      color: var(--text-muted);
+      border: none;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .type-btn:hover {
+      background: #3f4452;
+      color: var(--text-main);
+    }
+
+    .type-btn.active {
+      background: var(--accent);
+      color: var(--bg-color);
       font-weight: 600;
     }
 
@@ -200,6 +230,12 @@
   <div class="container">
     <div id="genres-header" class="genres-header"></div>
     
+    <div id="media-type-filter" class="media-type-filter" style="display: none;">
+      <button class="type-btn active" data-type="all" onclick="toggleMediaType('all')">全部格式</button>
+      <button class="type-btn" data-type="movie" onclick="toggleMediaType('movie')">电影</button>
+      <button class="type-btn" data-type="tv" onclick="toggleMediaType('tv')">剧集</button>
+    </div>
+
     <div id="list" class="list"></div>
     
     <div id="pagination" class="pagination"></div>
@@ -211,18 +247,18 @@
     const pageSize = 8;
     let currentPage = 1;
     
-    // 使用 Set 存储所有选中的影视类型，方便多选去重和删除
+    // 状态管理
     let selectedGenres = new Set();
+    let currentMediaType = 'all'; // 可选: 'all', 'movie', 'tv'
 
     // 加载数据
     async function loadMyData() {
       try {
         const res = await fetch("./moviesdata.json");
         allData = await res.json();
-        filteredData = [...allData]; 
         
         extractAndRenderGenres();
-        render();
+        applyFilters(); // 初始调用统一过滤函数
       } catch (error) {
         console.error("数据加载失败:", error);
         document.getElementById("list").innerHTML = `<div class="empty-state">数据加载失败，请检查控制台报错。</div>`;
@@ -245,14 +281,12 @@
       const headerEl = document.getElementById("genres-header");
       headerEl.innerHTML = "";
 
-      // 默认的“全部”按钮
       const allBtn = document.createElement("button");
       allBtn.className = `genre-btn ${selectedGenres.size === 0 ? 'active' : ''}`;
       allBtn.innerText = "全部";
       allBtn.onclick = () => toggleGenre("全部");
       headerEl.appendChild(allBtn);
 
-      // 其他分类按钮
       Array.from(genreSet).sort().forEach(genre => {
         const btn = document.createElement("button");
         btn.className = `genre-btn ${selectedGenres.has(genre) ? 'active' : ''}`;
@@ -262,48 +296,77 @@
       });
     }
 
-    // 多选切换核心逻辑
+    // 分类多选切换
     function toggleGenre(genre) {
-      currentPage = 1; // 切换筛选时重置到第一页
-
       if (genre === '全部') {
-        selectedGenres.clear(); // 点全部则清空所有多选标签
+        selectedGenres.clear();
       } else {
         if (selectedGenres.has(genre)) {
-          selectedGenres.delete(genre); // 再次点击已选中的，则取消选择
+          selectedGenres.delete(genre);
         } else {
-          selectedGenres.add(genre); // 点击未选中的，则加入选择
+          selectedGenres.add(genre);
         }
       }
 
-      // 执行多选过滤数据
-      if (selectedGenres.size === 0) {
-        filteredData = [...allData]; // 没有选任何标签，默认展示全部
-      } else {
-        filteredData = allData.filter(item => {
-          if (!item.genres) return false;
-          // 将影片自带的类型转为数组
-          const itemGenres = item.genres.split(',').map(g => g.trim());
-          // 只要影片包含已选中的任意一个标签就展示 (或逻辑)
-          /*return itemGenres.some(g => selectedGenres.has(g));*/
-          
-          /* 如果你希望改为【且】逻辑（即必须同时满足选中的所有标签才显示），请将上面一行换成下面这行： */
-           return Array.from(selectedGenres).every(g => itemGenres.includes(g)); 
-        });
-      }
-
-      // 动态更新所有按钮的样式类，避免重新生成 DOM 导致闪烁
-      const buttons = document.querySelectorAll('.genre-btn');
+      // 动态更新按钮样式
+      const buttons = document.querySelectorAll('.genres-header .genre-btn');
       buttons.forEach(btn => {
         const text = btn.innerText;
         if (text === '全部') {
-          if (selectedGenres.size === 0) btn.classList.add('active');
-          else btn.classList.remove('active');
+          btn.classList.toggle('active', selectedGenres.size === 0);
         } else {
-          if (selectedGenres.has(text)) btn.classList.add('active');
-          else btn.classList.remove('active');
+          btn.classList.toggle('active', selectedGenres.has(text));
         }
       });
+
+      applyFilters();
+    }
+
+    // 电影/剧集 切换
+    function toggleMediaType(type) {
+      currentMediaType = type;
+      
+      // 更新按钮样式
+      const buttons = document.querySelectorAll('#media-type-filter .type-btn');
+      buttons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+      });
+
+      applyFilters();
+    }
+
+    // 核心：统一的过滤逻辑
+    function applyFilters() {
+      currentPage = 1; // 每次筛选重置页码
+
+      // 1. 先按上方的“分类”过滤
+      let baseData = [];
+      if (selectedGenres.size === 0) {
+        baseData = [...allData];
+      } else {
+        baseData = allData.filter(item => {
+          if (!item.genres) return false;
+          const itemGenres = item.genres.split(',').map(g => g.trim());
+          // 且逻辑：必须同时满足选中的所有标签
+          return Array.from(selectedGenres).every(g => itemGenres.includes(g)); 
+        });
+      }
+
+      // 2. 根据上方分类过滤的结果，决定是否显示下方的“电影/剧集”筛选器
+      const mediaTypeContainer = document.getElementById("media-type-filter");
+      if (baseData.length === 0) {
+        mediaTypeContainer.style.display = "none";
+        filteredData = []; // 分类都没选出数据，最终数据自然为空
+      } else {
+        mediaTypeContainer.style.display = "flex"; // 有数据则展示次级筛选
+        
+        // 3. 在 baseData 基础上，再按“电影/剧集”过滤
+        if (currentMediaType === 'all') {
+          filteredData = baseData;
+        } else {
+          filteredData = baseData.filter(item => item.media_type === currentMediaType);
+        }
+      }
 
       render();
     }
@@ -329,7 +392,7 @@
       listEl.innerHTML = "";
 
       if (data.length === 0) {
-        listEl.innerHTML = `<div class="empty-state">当前所选标签组合下没有找到影片。</div>`;
+        listEl.innerHTML = `<div class="empty-state">当前所选标签组合下无数据啦!</div>`;
         return;
       }
 
@@ -360,14 +423,13 @@
       });
     }
 
-    // 渲染完美分页（带省略号的智能分页）
+    // 渲染完美分页
     function renderPagination(totalPage) {
       const pager = document.getElementById("pagination");
       pager.innerHTML = "";
 
       if (totalPage <= 1) return; 
 
-      // 上一页
       const prevBtn = createBtn("<", currentPage === 1, () => {
         currentPage--;
         render();
@@ -399,7 +461,6 @@
         pager.appendChild(createPageBtn(totalPage));
       }
 
-      // 下一页
       const nextBtn = createBtn(">", currentPage === totalPage, () => {
         currentPage++;
         render();
@@ -432,10 +493,11 @@
       return span;
     }
 
-    // 初始化入口
+    // 初始化
     (async () => {
       await loadMyData();
     })();
   </script>
 </body>
 </html>
+
