@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我的看过列表 - 典藏多选版</title>
+  <style>
+    :root {
+      --bg-color: #1a1b21; 
+      --card-bg: #262933;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #ffffff;
+      --border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      padding: 30px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* 顶部影视分类按钮 */
+    .genres-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .genre-btn {
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .genre-btn:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .genre-btn.active {
+      background: var(--accent);
+      color: var(--bg-color);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* 影片网格列表 */
+    .list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+      min-height: 400px; 
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .card img {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      display: block;
+      background-color: #333; 
+    }
+
+    .card-info {
+      padding: 14px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .card-meta span.type {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    .card-genres {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: auto; 
+    }
+
+    /* 完美分页组件 */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pagination button, .pagination span {
+      min-width: 36px;
+      height: 36px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0 12px;
+      border: none;
+      border-radius: 6px;
+      background: #2b2f3a;
+      color: var(--text-main);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .pagination span {
+      background: transparent;
+      cursor: default;
+      padding: 0;
+      min-width: 20px;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: #3f4452;
+    }
+
+    .pagination button.active {
+      background: var(--accent);
+      color: var(--bg-color);
+      font-weight: bold;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 0;
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="genres-header" class="genres-header"></div>
+    
+    <div id="list" class="list"></div>
+    
+    <div id="pagination" class="pagination"></div>
+  </div>
+
+  <script>
+    let allData = [];
+    let filteredData = [];
+    const pageSize = 8;
+    let currentPage = 1;
+    
+    // 使用 Set 存储所有选中的影视类型，方便多选去重和删除
+    let selectedGenres = new Set();
+
+    // 加载数据
+    async function loadMyData() {
+      try {
+        const res = await fetch("./moviesdata.json");
+        allData = await res.json();
+        filteredData = [...allData]; 
+        
+        extractAndRenderGenres();
+        render();
+      } catch (error) {
+        console.error("数据加载失败:", error);
+        document.getElementById("list").innerHTML = `<div class="empty-state">数据加载失败，请检查控制台报错。</div>`;
+      }
+    }
+
+    // 动态提取数据中的所有分类并渲染顶部按钮
+    function extractAndRenderGenres() {
+      const genreSet = new Set();
+      
+      allData.forEach(item => {
+        if (item.genres) {
+          item.genres.split(',').forEach(g => {
+            const cleanGenre = g.trim();
+            if (cleanGenre) genreSet.add(cleanGenre);
+          });
+        }
+      });
+
+      const headerEl = document.getElementById("genres-header");
+      headerEl.innerHTML = "";
+
+      // 默认的“全部”按钮
+      const allBtn = document.createElement("button");
+      allBtn.className = `genre-btn ${selectedGenres.size === 0 ? 'active' : ''}`;
+      allBtn.innerText = "全部";
+      allBtn.onclick = () => toggleGenre("全部");
+      headerEl.appendChild(allBtn);
+
+      // 其他分类按钮
+      Array.from(genreSet).sort().forEach(genre => {
+        const btn = document.createElement("button");
+        btn.className = `genre-btn ${selectedGenres.has(genre) ? 'active' : ''}`;
+        btn.innerText = genre;
+        btn.onclick = () => toggleGenre(genre);
+        headerEl.appendChild(btn);
+      });
+    }
+
+    // 多选切换核心逻辑
+    function toggleGenre(genre) {
+      currentPage = 1; // 切换筛选时重置到第一页
+
+      if (genre === '全部') {
+        selectedGenres.clear(); // 点全部则清空所有多选标签
+      } else {
+        if (selectedGenres.has(genre)) {
+          selectedGenres.delete(genre); // 再次点击已选中的，则取消选择
+        } else {
+          selectedGenres.add(genre); // 点击未选中的，则加入选择
+        }
+      }
+
+      // 执行多选过滤数据
+      if (selectedGenres.size === 0) {
+        filteredData = [...allData]; // 没有选任何标签，默认展示全部
+      } else {
+        filteredData = allData.filter(item => {
+          if (!item.genres) return false;
+          // 将影片自带的类型转为数组
+          const itemGenres = item.genres.split(',').map(g => g.trim());
+          // 只要影片包含已选中的任意一个标签就展示 (或逻辑)
+          /*return itemGenres.some(g => selectedGenres.has(g));*/
+          
+          /* 如果你希望改为【且】逻辑（即必须同时满足选中的所有标签才显示），请将上面一行换成下面这行： */
+           return Array.from(selectedGenres).every(g => itemGenres.includes(g)); 
+        });
+      }
+
+      // 动态更新所有按钮的样式类，避免重新生成 DOM 导致闪烁
+      const buttons = document.querySelectorAll('.genre-btn');
+      buttons.forEach(btn => {
+        const text = btn.innerText;
+        if (text === '全部') {
+          if (selectedGenres.size === 0) btn.classList.add('active');
+          else btn.classList.remove('active');
+        } else {
+          if (selectedGenres.has(text)) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+
+      render();
+    }
+
+    // 渲染卡片和分页的主逻辑
+    function render() {
+      const total = filteredData.length;
+      const totalPage = Math.ceil(total / pageSize) || 1; 
+      
+      if (currentPage > totalPage) currentPage = totalPage;
+
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageData = filteredData.slice(start, end);
+
+      renderList(pageData);
+      renderPagination(totalPage);
+    }
+
+    // 渲染网格列表
+    function renderList(data) {
+      const listEl = document.getElementById("list");
+      listEl.innerHTML = "";
+
+      if (data.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">当前所选标签组合下没有找到影片。</div>`;
+        return;
+      }
+
+      data.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const title = item.title || item.name || "无标题";
+        const date = (item.release_date || item.first_air_date || "").substring(0, 4); 
+        const lang = item.original_language || "";
+        const poster = item.poster_path
+          ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+          : "https://via.placeholder.com/400x600/2b2f3a/94a3b8?text=暂无海报";
+
+        card.innerHTML = `
+          <img src="${poster}" alt="${title}" loading="lazy" />
+          <div class="card-info">
+            <div class="card-title" title="${title}">${title}</div>
+            <div class="card-meta">
+              <span class="type">${item.media_type === 'movie' ? '电影' : '剧集'}</span>
+              ${date ? `<span>${date}</span>` : ''}
+              ${lang ? `<span>${lang.toUpperCase()}</span>` : ''}
+            </div>
+            <div class="card-genres">${item.genres || "暂无分类"}</div>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    // 渲染完美分页（带省略号的智能分页）
+    function renderPagination(totalPage) {
+      const pager = document.getElementById("pagination");
+      pager.innerHTML = "";
+
+      if (totalPage <= 1) return; 
+
+      // 上一页
+      const prevBtn = createBtn("<", currentPage === 1, () => {
+        currentPage--;
+        render();
+      });
+      pager.appendChild(prevBtn);
+
+      const siblingCount = 1; 
+      let startPage = Math.max(1, currentPage - siblingCount);
+      let endPage = Math.min(totalPage, currentPage + siblingCount);
+
+      if (currentPage <= siblingCount + 1) {
+        endPage = Math.min(totalPage, startPage + siblingCount * 2);
+      }
+      if (currentPage >= totalPage - siblingCount) {
+        startPage = Math.max(1, endPage - siblingCount * 2);
+      }
+
+      if (startPage > 1) {
+        pager.appendChild(createPageBtn(1));
+        if (startPage > 2) pager.appendChild(createEllipsis());
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pager.appendChild(createPageBtn(i));
+      }
+
+      if (endPage < totalPage) {
+        if (endPage < totalPage - 1) pager.appendChild(createEllipsis());
+        pager.appendChild(createPageBtn(totalPage));
+      }
+
+      // 下一页
+      const nextBtn = createBtn(">", currentPage === totalPage, () => {
+        currentPage++;
+        render();
+      });
+      pager.appendChild(nextBtn);
+    }
+
+    function createBtn(text, disabled, onClick) {
+      const btn = document.createElement("button");
+      btn.innerHTML = text;
+      btn.disabled = disabled;
+      btn.onclick = onClick;
+      return btn;
+    }
+
+    function createPageBtn(page) {
+      const btn = document.createElement("button");
+      btn.innerText = page;
+      if (page === currentPage) btn.classList.add("active");
+      btn.onclick = () => {
+        currentPage = page;
+        render();
+      };
+      return btn;
+    }
+
+    function createEllipsis() {
+      const span = document.createElement("span");
+      span.innerText = "...";
+      return span;
+    }
+
+    // 初始化入口
+    (async () => {
+      await loadMyData();
+    })();
+  </script>
+</body>
+</html>
