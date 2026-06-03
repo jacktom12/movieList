@@ -7,13 +7,25 @@
   <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🌿</text></svg>'>
   <style>
     :root {
-      --bg-color: #1a1b21; 
-      --card-bg: #262933;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent: #ffffff;
-      --border-color: rgba(255, 255, 255, 0.15);
-    }
+  color-scheme: light dark;
+  --bg-color: #926C59;
+  --card-bg: #A97D67;
+  --text-main: #FFF8F2;
+  --text-muted: #E7D5C8;
+  --accent: #F8E7DA;
+  --border-color: rgba(255,255,255,.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #181513;
+    --card-bg: #24201D;
+    --text-main: #F3EDE8;
+    --text-muted: #B8ACA3;
+    --accent: #CDA78B;
+    --border-color: rgba(255,255,255,.08);
+  }
+}
 
     * {
       margin: 0;
@@ -22,8 +34,10 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg-color);
+      font-family: "LXGW WenKai","PingFang SC","Microsoft YaHei",sans-serif;
+      background:
+      radial-gradient(circle at top, rgba(255,255,255,.05), transparent 40%),
+      var(--bg-color);
       color: var(--text-main);
       padding: 30px 20px;
       min-height: 100vh;
@@ -107,7 +121,9 @@
     }
 
     .card {
-      background: var(--card-bg);
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
       border-radius: 10px;
       overflow: hidden;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -117,8 +133,9 @@
     }
 
     .card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      transform: translateY(-8px);
+      box-shadow: 0 15px 40px rgba(0,0,0,.18);
+      background: rgba(255,255,255,.12);
     }
 
     .card img {
@@ -225,9 +242,47 @@
       color: var(--text-muted);
       font-size: 16px;
     }
-  </style>
+  
+#themeToggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+
+  width: 28px;
+  height: 28px;
+
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+
+  background: rgba(255,255,255,.08);
+
+  color: var(--text-main);
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  opacity: .75;
+  z-index: 999;
+}
+
+#themeToggle:hover {
+  opacity: 1;
+}
+
+body.dark{
+  --bg-color:#181513;
+  --card-bg:#24201D;
+  --text-main:#F3EDE8;
+  --text-muted:#B8ACA3;
+  --accent:#CDA78B;
+  --border-color:rgba(255,255,255,.08);
+}
+
+</style>
 </head>
 <body>
+<button id="themeToggle">🌙</button>
   <div class="container">
     <div id="genres-header" class="genres-header"></div>
     
@@ -494,7 +549,13 @@
       return span;
     }
 
-    // 初始化
+    
+const btn=document.getElementById('themeToggle');
+btn.onclick=()=>{
+ document.body.classList.toggle('dark');
+};
+    
+// 初始化
     (async () => {
       await loadMyData();
     })();
