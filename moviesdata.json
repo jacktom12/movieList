@@ -22,6 +22,29 @@
     "vote_count": 2225,
     "genres": "喜剧,家庭,冒险"
   },
+    {
+    "adult": false,
+    "backdrop_path": "/yFkUPqBuUnbhYbQL8VFpTrAT9za.jpg",
+    "id": 686,
+    "title": "超时空接触",
+    "original_title": "Contact",
+    "overview": "　　艾莉·爱罗维（茱迪·福斯特 饰）自幼就对无线电通讯情有独钟。长大后，她成为一名天文学家，其项目内容为接收外太空信号。她希望能借此找到宇宙其他文明的存在。天才的理想得到的却是投资者的冷眼相看，幸好有神秘人帮助艾莉继续工作。 一次偶然的机会，艾莉收到了来自织女星的频率信号，似乎证明了艾莉一直以来的工作是正确的。但这带来的不是她个人事业的成功，而是政治、社会、宗教、国家各个角度的矛盾与讨论。深陷这一切暴风中心的艾莉，更要面对与神职人士帕尔默·乔丝（马修·麦康纳 饰）的感情纠葛。 个人与世界，真相与现实，艾莉面临着远远超越学术范围的挑战。",
+    "poster_path": "/o440ZSUErzbGv0R2xnlloucO3hN.jpg",
+    "media_type": "movie",
+    "original_language": "en",
+    "genre_ids": [
+      18,
+      878,
+      9648
+    ],
+    "popularity": 6.4564,
+    "release_date": "1997-07-11",
+    "softcore": false,
+    "video": false,
+    "vote_average": 7.444,
+    "vote_count": 5006,
+    "genres": "剧情,科幻,悬疑"
+  },
   {
     "adult": false,
     "backdrop_path": "/sFtBsQVPZdR13MQh36Npfx9m9Lw.jpg",
